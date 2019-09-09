@@ -3,6 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import model_selection
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 
 def train_model():
@@ -16,7 +17,7 @@ def train_model():
     features_train, features_test, labels_train, labels_test = model_selection.train_test_split(features, labels,
                                                                                                 test_size=0.2,
                                                                                                 random_state=30)
-    model = RandomForestClassifier(n_estimators=150, max_depth=5)
+    model = RandomForestClassifier(n_estimators=150, max_depth=5, min_impurity_split=None, max_features='auto')
     model.fit(features_train, labels_train)
     return features_train, features_test, labels_train, labels_test, model
 
@@ -33,7 +34,8 @@ def average_score(features_train, features_test, labels_train, labels_test):
 def best_num_estimators(features_train, features_test, labels_train, labels_test):
     scores = []
     for i in range(1, 200):
-        model = RandomForestClassifier(n_estimators=i, max_depth=5, random_state=10)
+        model = RandomForestClassifier(n_estimators=i, max_depth=5, random_state=10, min_impurity_split=None,
+                                       max_features='auto')
         model.fit(features_train, labels_train)
         scores.append(model.score(features_test, labels_test))
 
@@ -43,6 +45,18 @@ def best_num_estimators(features_train, features_test, labels_train, labels_test
     plt.ylabel("score")
     plt.title("Finding Best n_estimator")
     plt.show()
+
+
+def sensitivity_score(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    sensitivity = tp / (tp + fn)
+    return sensitivity
+
+
+def specificity_score(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    specificity = tn / (tn + fp)
+    return specificity
 
 
 if __name__ == '__main__':
@@ -56,8 +70,14 @@ if __name__ == '__main__':
             choice = int(input("Please enter a valid number between 1 and 4.\n"))
         if (choice == 1):
             print("Computing Score...")
-            print("Average Score over 100 runs: {}\n".format(average_score(features_train, features_test, labels_train,
-                                                                         labels_test)))
+            y_true = labels_test;
+            y_pred = model.predict(features_test);
+            SensitivityScore = sensitivity_score(y_true, y_pred);
+            SpecificityScore = specificity_score(y_true, y_pred);
+            print("Average Score over 100 runs: {}".format(average_score(features_train, features_test, labels_train,
+                                                                           labels_test)))
+            print("Specificity Score: {}".format(SpecificityScore))
+            print("SensitivityScore: {}\n".format(SensitivityScore))
         elif (choice == 2):
             print("Creating Graph...\n")
             best_num_estimators(features_train, features_test, labels_train, labels_test)
